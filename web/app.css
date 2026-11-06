@@ -1,0 +1,129 @@
+:root {
+  --bg: #101410;
+  --panel: #1a221c;
+  --panel-2: #232d26;
+  --line: #314036;
+  --ink: #e7f0e6;
+  --muted: #93a898;
+  --amber: #e4b15a;
+  --mint: #7dcea0;
+  --red: #e36b5c;
+  --blue: #8eb6d8;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(228, 177, 90, 0.08), transparent 50%),
+    var(--bg);
+  color: var(--ink);
+  font-family: "Malgun Gothic", "Segoe UI", sans-serif;
+  font-size: 14px;
+}
+button, input, select { font-family: inherit; color: inherit; }
+button { cursor: pointer; }
+.top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(16, 20, 16, 0.92);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.brand { display: flex; flex-direction: column; min-width: 180px; }
+.brand b { letter-spacing: 0.14em; font-size: 13px; color: var(--amber); }
+.brand span { color: var(--muted); font-size: 12px; }
+.tabs { display: flex; gap: 6px; flex: 1; }
+.tabs button, .btn, .app-pick button {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+.tabs button.on, .app-pick button.on { background: #3a3220; border-color: #8a6a32; color: var(--amber); }
+.clock { color: var(--muted); font-variant-numeric: tabular-nums; }
+.wrap { padding: 18px 22px 40px; }
+.grid { display: grid; gap: 12px; }
+.stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.card, .panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.card { padding: 14px 16px; }
+.k { color: var(--muted); font-size: 12px; }
+.v { font-size: 28px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+.bar { height: 8px; background: #0d120f; border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.bar > i { display: block; height: 100%; background: linear-gradient(90deg, #8a6a32, var(--amber)); }
+.bar.mem > i { background: linear-gradient(90deg, #2f6d52, var(--mint)); }
+.apps { margin-top: 12px; }
+.card h3 { margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+.led { width: 9px; height: 9px; border-radius: 50%; background: #5c675f; display: inline-block; }
+.led.up { background: var(--mint); box-shadow: 0 0 8px var(--mint); }
+.led.degraded { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
+.led.down { background: var(--red); }
+.meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; color: var(--muted); font-size: 12px; }
+#set { max-width: 880px; }
+.set-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 10px; margin-top: 8px; }
+.set-fields label { min-width: 0; }
+.set-fields input { display: block; width: 100%; margin-top: 4px; }
+.meta b { color: var(--ink); font-weight: 600; }
+.panel { padding: 14px; margin-top: 12px; overflow-x: auto; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 8px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+tr.sel { background: #2a3328; }
+.btn.primary { background: #3d4a32; border-color: #6d8a55; }
+.btn.danger { background: #4a2c28; border-color: #a15a50; }
+.btn.ghost { background: transparent; }
+input, select {
+  background: #101510;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.split { display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 12px; }
+.msg {
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: #101510;
+  border-radius: 10px;
+  padding: 10px;
+  min-height: 120px;
+  max-height: 280px;
+  overflow: auto;
+  font-family: Consolas, "Malgun Gothic", monospace;
+  font-size: 12px;
+}
+.toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #2c2418;
+  border: 1px solid #8a6a32;
+  color: var(--amber);
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: none;
+}
+canvas { width: 100%; height: 72px; display: block; margin-top: 8px; }
+.hidden { display: none; }
+a { color: var(--blue); }
+@media (max-width: 1100px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+  .cards, .split { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .stats { grid-template-columns: 1fr; }
+  .top { flex-wrap: wrap; }
+  .set-fields { grid-template-columns: 1fr; }
+}

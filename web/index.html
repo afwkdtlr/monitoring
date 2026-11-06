@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TEIA OPS</title>
+  <link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <b>TEIA OPS</b>
+      <span>core · tool · mes · pos · plc · off</span>
+    </div>
+    <nav class="tabs">
+      <button class="on" data-tab="dash">현황</button>
+      <button data-tab="apps">앱 제어</button>
+      <button data-tab="sock">소켓</button>
+      <button data-tab="host">호스트</button>
+      <button data-tab="set">설정</button>
+    </nav>
+    <div class="clock" id="clock"></div>
+  </header>
+  <main class="wrap">
+    <section id="dash">
+      <div class="grid stats">
+        <article class="card"><div class="k">CPU</div><div class="v" id="cpu">-</div><div class="bar"><i id="cpuBar" style="width:0%"></i></div></article>
+        <article class="card"><div class="k">메모리</div><div class="v" id="mem">-</div><div class="sub" id="memSub"></div><div class="bar mem"><i id="memBar" style="width:0%"></i></div></article>
+        <article class="card"><div class="k">디스크</div><div class="v" id="disk">-</div><div class="sub" id="diskSub"></div></article>
+        <article class="card"><div class="k">앱</div><div class="v" id="upCount">-</div><div class="sub" id="upSub"></div><canvas id="spark"></canvas></article>
+      </div>
+      <div class="grid cards apps" id="cards"></div>
+    </section>
+    <section id="apps" class="hidden">
+      <div class="panel">
+        <table>
+          <thead>
+            <tr>
+              <th>앱</th><th>상태</th><th>PID</th><th>Heap</th><th>Thread</th><th>CPU</th><th>포트</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="appRows"></tbody>
+        </table>
+      </div>
+    </section>
+    <section id="sock" class="hidden">
+      <div class="panel">
+        <div class="row">
+          <div class="app-pick" id="appPick"></div>
+          <input id="skFilter" placeholder="소켓 ID / IP">
+          <button class="btn primary" id="btnLoadSk">조회</button>
+          <button class="btn" id="btnThreads">스레드</button>
+          <span class="k" id="skStatus"></span>
+        </div>
+        <div class="split" style="margin-top:12px">
+          <div>
+            <table>
+              <thead>
+                <tr><th>기동</th><th>연결</th><th>소켓</th><th>구분</th><th>주소</th></tr>
+              </thead>
+              <tbody id="skRows"></tbody>
+            </table>
+          </div>
+          <div>
+            <div class="row">
+              <button class="btn" id="btnChan">채널</button>
+              <button class="btn" id="btnPing">Ping</button>
+              <button class="btn primary" id="btnSkStart">시작</button>
+              <button class="btn danger" id="btnSkStop">정지</button>
+              <button class="btn" id="btnRerun">Client 재접속</button>
+            </div>
+            <div class="k" style="margin:10px 0 6px">채널</div>
+            <table>
+              <thead><tr><th>원격</th><th>시각</th><th></th></tr></thead>
+              <tbody id="chRows"></tbody>
+            </table>
+            <div class="row" style="margin-top:8px">
+              <button class="btn" id="btnRead">수신</button>
+              <button class="btn" id="btnWrite">발신</button>
+            </div>
+            <div class="msg" id="msgBox">소켓을 조회하면 여기에 전문이 표시됩니다.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section id="set" class="hidden">
+      <div class="panel">
+        <div class="k">JAR 옮기기 폴더</div>
+        <input id="setJarDir" style="width:100%;margin-top:8px" placeholder="C:\SDOP\APP\jar">
+        <p class="k" style="margin-top:8px">재시작 옆 JAR 옮기기가 개발 target JAR를 이 폴더로 복사합니다.</p>
+      </div>
+      <div class="panel">
+        <div class="row">
+          <b>앱</b>
+          <button class="btn" id="btnAddApp">행 추가</button>
+          <button class="btn primary" id="btnSaveSet">저장</button>
+          <span class="k" id="setStatus"></span>
+        </div>
+        <p class="k">기동 bat, 프로세스 이름, 개발 소스의 target JAR 경로를 사이트에 맞게 넣습니다. 저장하면 바로 그 경로를 봅니다.</p>
+        <div id="setApps"></div>
+      </div>
+    </section>
+    <section id="host" class="hidden">
+      <div class="panel" id="diskList"></div>
+      <div class="panel">
+        <div class="k">Java 프로세스</div>
+        <table>
+          <thead><tr><th>PID</th><th>이름</th><th>메모리</th><th>명령</th></tr></thead>
+          <tbody id="procRows"></tbody>
+        </table>
+      </div>
+      <div class="panel">
+        <div class="k">제어 기록</div>
+        <div class="msg" id="journal"></div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="/assets/app.js"></script>
+</body>
+</html>
