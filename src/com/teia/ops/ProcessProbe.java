@@ -6,8 +6,10 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 public final class ProcessProbe {
     public static final class Proc {
@@ -24,8 +26,41 @@ public final class ProcessProbe {
         }
     }
 
+    private final Object gate = new Object();
+    private List<Proc> cached = Collections.emptyList();
+    private long cachedAt;
+    private boolean inflight;
+
     public List<Proc> javaProcesses() {
+        synchronized (gate) {
+            if (cachedAt > 0 && System.currentTimeMillis() - cachedAt < 3000L) {
+                return cached;
+            }
+            if (inflight) {
+                return cached;
+            }
+            inflight = true;
+        }
+        List<Proc> fresh = null;
+        try {
+            fresh = loadProcesses();
+        } finally {
+            synchronized (gate) {
+                inflight = false;
+                if (fresh != null) {
+                    cached = fresh;
+                }
+                cachedAt = System.currentTimeMillis();
+            }
+        }
+        return cached;
+    }
+
+    private List<Proc> loadProcesses() {
         List<Proc> list = fromPowerShell();
+        if (list == null) {
+            return null;
+        }
         if (list.isEmpty()) {
             list = fromWmic();
         }
@@ -33,8 +68,8 @@ public final class ProcessProbe {
     }
 
     public Proc match(AppDef app, List<Proc> processes) {
-        String image = app.processName.toLowerCase(Locale.ROOT);
-        String hint = app.commandHint.toLowerCase(Locale.ROOT);
+        String image = app.processName == null ? "" : app.processName.toLowerCase(Locale.ROOT);
+        String hint = app.commandHint == null ? "" : app.commandHint.toLowerCase(Locale.ROOT);
         Proc fallback = null;
         for (Proc proc : processes) {
             String name = proc.name.toLowerCase(Locale.ROOT);
@@ -61,13 +96,19 @@ public final class ProcessProbe {
         if (!script.isFile()) {
             return new ArrayList<Proc>();
         }
-        String text = run("powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script.getAbsolutePath());
+        String text = runFor(8000L, "powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script.getAbsolutePath());
+        if (text == null) {
+            return null;
+        }
         return readLines(text);
     }
 
     private List<Proc> fromWmic() {
-        String out = run("wmic", "process", "where", "name like 'java%'", "get",
+        String out = runFor(8000L, "wmic", "process", "where", "name like 'java%'", "get",
                 "ProcessId,Name,WorkingSetSize,CommandLine", "/format:list");
+        if (out == null) {
+            return null;
+        }
         List<Proc> list = new ArrayList<Proc>();
         String pid = null;
         String name = null;
@@ -143,19 +184,46 @@ public final class ProcessProbe {
     }
 
     public static String run(String... command) {
+        String text = runFor(8000L, command);
+        return text == null ? "" : text;
+    }
+
+    /**
+     * @return 출력. 제한 시간 안에 끝나지 않으면 null. 실행 실패는 빈 문자열.
+     */
+    static String runFor(long timeoutMs, String... command) {
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectErrorStream(true);
-            Process process = pb.start();
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            InputStream in = process.getInputStream();
-            byte[] tmp = new byte[8192];
-            int n;
-            while ((n = in.read(tmp)) >= 0) {
-                buf.write(tmp, 0, n);
+            final Process process = pb.start();
+            final ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            Thread reader = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        InputStream in = process.getInputStream();
+                        byte[] tmp = new byte[8192];
+                        int n;
+                        while ((n = in.read(tmp)) >= 0) {
+                            synchronized (buf) {
+                                buf.write(tmp, 0, n);
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            }, "ops-proc-read");
+            reader.setDaemon(true);
+            reader.start();
+            boolean finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                reader.join(500L);
+                return null;
             }
-            process.waitFor();
-            return decode(buf.toByteArray());
+            reader.join(1000L);
+            synchronized (buf) {
+                return decode(buf.toByteArray());
+            }
         } catch (Exception e) {
             return "";
         }

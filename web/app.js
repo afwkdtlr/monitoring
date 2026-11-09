@@ -157,7 +157,10 @@
 
   function ensurePick() {
     var box = $("appPick");
-    if (box.childNodes.length) return;
+    var ids = (data.apps || []).map(function (a) { return a.id; }).join(",");
+    if (box.getAttribute("data-ids") === ids && box.childNodes.length) return;
+    box.setAttribute("data-ids", ids);
+    if (ids && ids.split(",").indexOf(skApp) < 0) skApp = (data.apps[0] && data.apps[0].id) || skApp;
     box.innerHTML = (data.apps || []).map(function (a) {
       return '<button data-app="' + a.id + '"' + (a.id === skApp ? ' class="on"' : '') + '>' + esc(a.name) + '</button>';
     }).join("");
@@ -205,14 +208,22 @@
     return "닫힘";
   }
 
+  var acting = false;
   function actApp(id, act) {
+    if (acting) {
+      toast("이전 제어가 아직 끝나지 않았습니다");
+      return;
+    }
+    acting = true;
     fetch("/api/apps/" + encodeURIComponent(id) + "/" + act, { method: "POST" })
       .then(function (r) { return r.json(); })
       .then(function (j) {
-        toast(j.message || j.ok);
+        if (!j.ok) throw new Error(j.message || "실패");
+        toast(j.message || "완료");
         load();
       })
-      .catch(function (err) { toast(String(err)); });
+      .catch(function (err) { toast(String(err.message || err)); })
+      .then(function () { acting = false; });
   }
 
   function callSocket(execute, work, app) {

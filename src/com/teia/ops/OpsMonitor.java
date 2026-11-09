@@ -13,8 +13,10 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -236,8 +238,22 @@ public final class OpsMonitor {
         return port;
     }
 
-    private void handOff(final HttpExchange ex, Runnable job) {
-        actions.execute(job);
+    private void handOff(final HttpExchange ex, final Runnable job) {
+        final CountDownLatch done = new CountDownLatch(1);
+        actions.execute(new Runnable() {
+            public void run() {
+                try {
+                    job.run();
+                } finally {
+                    done.countDown();
+                }
+            }
+        });
+        try {
+            done.await(150000L, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void finishAction(HttpExchange ex, AppDef app, boolean restart) {
